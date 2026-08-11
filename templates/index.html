@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<title>GCash</title>
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='icon.png') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.png') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: #000;
+    font-family: 'Gotham Rounded',ui-rounded, "SF Pro Rounded", sans-serif;
+    overscroll-behavior-y: contain;
+  }
+
+  @font-face {
+  font-family: 'Gotham Rounded';
+  src: url("{{ url_for('static', filename='fonts/gothamrnd_medium.otf') }}") format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+.balance-num {
+  font-family: 'Gotham Rounded', sans-serif;
+  font-weight: 500;
+  font-size: 25px;
+  letter-spacing: 0.01em;
+  color: #eaf3ff;
+  white-space: nowrap;
+}
+
+  #stage {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 0;
+    container-type: inline-size;
+  }
+  #stage img { width: 100%; display: block; }
+
+  .hit {
+    position: absolute;
+    /* border: 1px solid red; uncomment to debug */
+  }
+
+  .balance-mask {
+    position: absolute;
+    background: #0088ff;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    color: #fffffff5;
+    overflow: hidden;
+  }
+  .balance-num {
+    position: absolute;
+    left: 4px;
+    top: 17px;
+    font-family: 'Gotham Rounded', ui-rounded, "SF Pro Rounded", sans-serif;
+    font-weight: 565;
+    font-size: 24.1px;
+    letter-spacing: -0.005em;
+  }
+
+  .modal-backdrop {
+    background: rgba(10, 20, 45, 0.55);
+  }
+  .sheet { animation: slideUp .25s ease-out; }
+  @keyframes slideUp { from { transform: translateY(28px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .fade-in { animation: fadeIn .18s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .toast { animation: toastIn .25s ease-out; }
+  @keyframes toastIn { from { transform: translate(-50%, 12px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <img src="{{ url_for('static', filename='replacement.png') }}" alt="GCash home screen">
+
+      <!-- balance number mask + live text -->
+  <div class="balance-mask" style="left:13.6%; top:19%; width:50%; height:4.2%;">
+    <span id="balanceText" class="balance-num">2,516.04</span>
+  </div>
+
+  <!-- eye toggle -->
+  <button id="eyeToggle" class="hit" style="left:36%; top:13.6%; width:7%; height:2.6%;"></button>
+
+  <!-- + Cash In hit area -->
+  <button id="cashInBtn" class="hit" style="left:67.5%; top:16.8%; width:28.5%; height:4.5%;"></button>
+
+  <!-- Send hit area -->
+  <button id="sendBtn" class="hit" style="left:1.5%; top:26.2%; width:23.5%; height:8.8%;" onclick="openModal('sendModal')"></button>
+
+<!-- SEND MODAL -->
+<div id="sendModal" class="fixed inset-0 z-50 hidden items-end justify-center modal-backdrop fade-in">
+  <div class="sheet bg-white w-full max-w-[480px] rounded-t-3xl p-5 pb-8">
+    <div class="w-10 h-1.5 bg-gray-300 rounded-full mx-auto mb-4"></div>
+    <h3 class="text-lg font-bold text-[#0d1b3e] mb-4">Send Money</h3>
+
+    <label class="text-xs font-bold text-gray-500">RECIPIENT</label>
+    <input id="sendRecipient" type="text" placeholder="Name or mobile number"
+           class="w-full border border-gray-200 rounded-xl px-4 py-3 mt-1 mb-4 text-sm outline-none focus:border-[#3B86F7]">
+
+    <label class="text-xs font-bold text-gray-500">AMOUNT</label>
+    <div class="flex items-center border border-gray-200 rounded-xl px-4 py-3 mt-1 mb-1 focus-within:border-[#3B86F7]">
+      <span class="text-xl font-bold text-[#0d1b3e] mr-2">₱</span>
+      <input id="sendAmount" type="number" inputmode="decimal" placeholder="0.00"
+             class="w-full outline-none text-xl font-bold text-[#0d1b3e]">
+    </div>
+    <p id="sendError" class="text-red-500 text-xs h-4 mb-3"></p>
+
+    <button onclick="submitSend()" class="w-full bg-[#3B86F7] text-white font-bold py-3.5 rounded-full mt-2">
+      Confirm
+    </button>
+    <button onclick="closeModal('sendModal')" class="w-full text-gray-500 font-semibold py-3">Cancel</button>
+  </div>
+</div>
+
+<!-- CASH IN MODAL -->
+<div id="cashInModal" class="fixed inset-0 z-50 hidden items-end justify-center modal-backdrop fade-in">
+  <div class="sheet bg-white w-full max-w-[480px] rounded-t-3xl p-5 pb-8">
+    <div class="w-10 h-1.5 bg-gray-300 rounded-full mx-auto mb-4"></div>
+    <h3 class="text-lg font-bold text-[#0d1b3e] mb-4">Cash In</h3>
+
+    <label class="text-xs font-bold text-gray-500">AMOUNT</label>
+    <div class="flex items-center border border-gray-200 rounded-xl px-4 py-3 mt-1 mb-1 focus-within:border-[#3B86F7]">
+      <span class="text-xl font-bold text-[#0d1b3e] mr-2">₱</span>
+      <input id="cashInAmount" type="number" inputmode="decimal" placeholder="0.00"
+             class="w-full outline-none text-xl font-bold text-[#0d1b3e]">
+    </div>
+    <p id="cashInError" class="text-red-500 text-xs h-4 mb-3"></p>
+
+    <button onclick="submitCashIn()" class="w-full bg-[#3B86F7] text-white font-bold py-3.5 rounded-full mt-2">
+      Confirm
+    </button>
+    <button onclick="closeModal('cashInModal')" class="w-full text-gray-500 font-semibold py-3">Cancel</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="fixed hidden bottom-10 left-1/2 -translate-x-1/2 bg-[#0d1b3e] text-white text-sm font-semibold px-5 py-3 rounded-full shadow-lg z-50 toast whitespace-nowrap"></div>
+
+<script>
+let balanceVisible = true;
+let currentBalance = {{ balance }};
+
+function fmt(n) {
+  return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function renderBalance() {
+  document.getElementById('balanceText').textContent = balanceVisible ? fmt(currentBalance) : '••••••';
+}
+
+document.getElementById('eyeToggle').addEventListener('click', () => {
+  balanceVisible = !balanceVisible;
+  renderBalance();
+});
+document.getElementById('cashInBtn').addEventListener('click', () => openModal('cashInModal'));
+
+function openModal(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('hidden');
+  el.classList.add('flex');
+}
+function closeModal(id) {
+  const el = document.getElementById(id);
+  el.classList.add('hidden');
+  el.classList.remove('flex');
+  if (id === 'sendModal') {
+    document.getElementById('sendError').textContent = '';
+    document.getElementById('sendAmount').value = '';
+    document.getElementById('sendRecipient').value = '';
+  } else {
+    document.getElementById('cashInError').textContent = '';
+    document.getElementById('cashInAmount').value = '';
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => t.classList.add('hidden'), 2200);
+}
+
+async function submitSend() {
+  const amount = parseFloat(document.getElementById('sendAmount').value);
+  const recipient = document.getElementById('sendRecipient').value;
+  const errEl = document.getElementById('sendError');
+  errEl.textContent = '';
+
+  const res = await fetch('/api/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount, recipient })
+  });
+  const data = await res.json();
+  if (!data.ok) { errEl.textContent = data.error; return; }
+
+  currentBalance = data.balance;
+  renderBalance();
+  closeModal('sendModal');
+  showToast(`✓ Sent ₱${fmt(data.amount)} to ${data.recipient}`);
+}
+
+async function submitCashIn() {
+  const amount = parseFloat(document.getElementById('cashInAmount').value);
+  const errEl = document.getElementById('cashInError');
+  errEl.textContent = '';
+
+  const res = await fetch('/api/cashin', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount })
+  });
+  const data = await res.json();
+  if (!data.ok) { errEl.textContent = data.error; return; }
+
+  currentBalance = data.balance;
+  renderBalance();
+  closeModal('cashInModal');
+  showToast(`✓ Cashed in ₱${fmt(data.amount)}`);
+}
+
+renderBalance();
+</script>
+</body>
+</html>
