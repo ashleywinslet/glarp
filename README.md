@@ -1,4 +1,4 @@
-# Glarp Home Screen — Pixel-Accurate Clone (v2)
+# GLarp Home Screen — Pixel-Accurate Clone (v2)
 
 This version uses your actual screenshot as the UI, with the status bar
 (time, dynamic island, wifi, battery) cropped off, and just two working
