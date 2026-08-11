@@ -1,4 +1,4 @@
-# GCash Home Screen — Pixel-Accurate Clone (v2)
+# Glarp Home Screen — Pixel-Accurate Clone (v2)
 
 This version uses your actual screenshot as the UI, with the status bar
 (time, dynamic island, wifi, battery) cropped off, and just two working
@@ -10,7 +10,7 @@ the static image, exactly as in your screenshot.
 - `app.py` — Flask backend (balance stored in session)
 - `templates/index.html` — the page: your screenshot + invisible clickable
   hotspots + two bottom-sheet modals
-- `static/gcash_screen.png` — your screenshot, cropped to remove the status bar
+- `static/replacement.png` — your screenshot, cropped to remove the status bar
 
 ## Run instructions
 
@@ -40,7 +40,7 @@ allowing it through the firewall).
 
 ## Notes
 - If you want to re-crop or replace the screenshot, swap
-  `static/gcash_screen.png` for a same-aspect-ratio image and the hotspot
+  `static/replacement.png` for a same-aspect-ratio image and the hotspot
   percentages in `index.html` should still line up closely — nudge the
   `left/top/width/height` percentages on `.balance-mask`, `#eyeToggle`,
   `#cashInBtn`, and `#sendBtn` if needed.
